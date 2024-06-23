@@ -6,6 +6,7 @@ import zipfile
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import savemat
+import tempfile
 
 # Example intrinsic and extrinsic matrices
 K = np.array([
@@ -29,6 +30,44 @@ M = [np.array([
 ])]
 
 #Aux. Functions-------------------------------------------------------------
+
+def validate_zip_file(zip_file):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(tmpdir)
+        
+        # Check if directories "object-images" and "cameras-images" exist
+        dir_obj = os.path.join(tmpdir, 'object-images')
+        dir_cam = os.path.join(tmpdir, 'cameras-images')
+        if not os.path.isdir(dir_obj) or not os.path.isdir(dir_cam):
+            return "The uploaded file does not contain directories named 'object-images' or 'cameras-images'."
+
+         # Iterate over all subdirectories in "object-images"
+        for subdir in os.listdir(dir_obj):
+            subdir_path = os.path.join(dir_obj, subdir)
+            if os.path.isdir(subdir_path):
+                # Check if the subdirectory contains .jpg files
+                if not any(fname.endswith(('.jpg','.png')) for fname in os.listdir(subdir_path)):
+                    return f"The subdirectory '{subdir}' in directory 'object-images' does not contain any .jpg files."
+
+        if not os.path.isfile(os.path.join(dir_obj, 'cameras.json')):
+            return "Directory 'cameras-images' does not contain the file 'cameras.json'."        
+        
+        
+        # Iterate over all subdirectories in "cameras-images"
+        for subdir in os.listdir(dir_cam):
+            subdir_path = os.path.join(dir_cam, subdir)
+            if os.path.isdir(subdir_path):
+                # Check if the subdirectory contains .jpg files
+                if not any(fname.endswith(('.jpg','.png')) for fname in os.listdir(subdir_path)):
+                    return f"The subdirectory '{subdir}' in directory 'cameras-images' does not contain any .jpg files."
+                
+        if not os.path.isfile(os.path.join(dir_cam, 'cameras.json')):
+            return "Directory 'cameras-images' does not contain the file 'cameras.json'."
+                
+        
+
+        return "The uploaded file is valid."
 
 
 # Function to create the text file with user inputs
@@ -101,28 +140,33 @@ def create_3d_plot(camera_world_coords):
 
 def process_file(fileobj,marker_size, marker_ids, brightness, contrast):
 
-    UploadDir = "./CalibrationData/"
-    path = UploadDir
-    if not os.path.exists(UploadDir):
-        os.mkdir(UploadDir)
+    validation_error = validate_zip_file(fileobj)
 
-    #copy and change directory
-    shutil.copy(fileobj,UploadDir)
-    path += os.path.basename(fileobj)
+    if validation_error == "The uploaded file is valid.":
+        UploadDir = "./CalibrationData/"
+        path = UploadDir
+        if not os.path.exists(UploadDir):
+            os.mkdir(UploadDir)
 
-    #Unzips file and creates config
-    with zipfile.ZipFile(path, 'r') as zip_ref:
-        zip_ref.extractall(UploadDir)
-    create_config_file(marker_size, marker_ids, brightness, contrast)
+        #copy and change directory
+        shutil.copy(fileobj,UploadDir)
+        path += os.path.basename(fileobj)
 
-    #TODO:Run Vican here
-    #M = Vican(UploadDir)
-    
-    #generates 3D visualization and outputs file
-    camera_world_coords  = camera_to_world(M)
-    matrices_dict = {f'matrix_{i+1}': M[i] for i in range(len(M))}
-    savemat("pose_est.mat", matrices_dict)
-    return create_3d_plot(camera_world_coords),"pose_est.mat"
+        #Unzips file and creates config
+        with zipfile.ZipFile(path, 'r') as zip_ref:
+            zip_ref.extractall(UploadDir)
+        create_config_file(marker_size, marker_ids, brightness, contrast)
+
+        #TODO:Run Vican here
+        #M = Vican(UploadDir)
+        
+        #generates 3D visualization and outputs file
+        camera_world_coords  = camera_to_world(M)
+        matrices_dict = {f'matrix_{i+1}': M[i] for i in range(len(M))}
+        savemat("pose_est.mat", matrices_dict)
+        return "No Errors","pose_est.mat",create_3d_plot(camera_world_coords)
+    else:
+        return validation_error, savemat("pose_est.mat", {}), plt.figure()
 
 #Main---------------------------------------------------------------------
 
@@ -135,14 +179,15 @@ description_html = """
     <pre style="background-color: #ffffff; padding: 10px; border-radius: 5px; overflow-x: auto;">
     &lt;uploaded-folder&gt.zip;
     │
-    ├── &lt;object-images&gt;
+    ├── object-images
     │   ├── 0
     │   │   └── 0.jpg
     │   ├── 1
     │   │   └── 1.jpg
-    │   └── ...
+    │   ├── ...
+    │   └── cameras.json
     │
-    └── &lt;cameras-images&gt;
+    └── cameras-images
         ├── 0
         │   └── 1.jpg
         │   └── 10.jpg
@@ -153,15 +198,56 @@ description_html = """
         │   └── 10.jpg
         │   └── 11.jpg
         │   └── 15.jpg
-        └── ...
+        ├── ...
+        └── cameras.json
     </pre>
-    <p>Note: The &lt;object-images&gt; and &lt;cameras-images&gt; folders structure's is &lt;object-images or cameras-images&gt;/&lt;timestep&gt;/&lt;camera_id&gt;.jpg</p>
+    <p>1.1) The cameras-images folders structure's is cameras-images/&lt;timestep&gt;/&lt;camera_id&gt;.jpg. The object-images folders structure's is object-images/&lt;timestep&gt;/0.jpg</p>
+    <p>1.2) The cameras.json must have the following structure:
+    <pre style="background-color: #ffffff; padding: 10px; border-radius: 5px; overflow-x: auto;">
+    {
+        "0": {
+            "fx": (...),
+            "fy": (...),
+            "cx": (...),
+            "cy": (...),
+            "resolution_x": (...),
+            "resolution_y": (...),
+            "clip_start": (...),
+            "clip_end": (...),
+            "t": [0,0,0],
+            "R": [
+                [1,0,0],
+                [0,1,0],
+                [0,0,1]
+            ],
+            "distortion": [0,0,0,0,0,0,0,0,0,0,0,0]
+        },
+        ...
+        "N": {
+            "fx": (...),
+            "fy": (...),
+            "cx": (...),
+            "cy": (...),
+            "resolution_x": (...),
+            "resolution_y": (...),
+            "clip_start": (...),
+            "clip_end": (...),
+            "t": [0,0,0],
+            "R": [
+                [1,0,0],
+                [0,1,0],
+                [0,0,1]
+            ],
+            "distortion": [0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+    }
+    </pre>
     <p>2) Fill the desired configurations </p>
     <p>3) Press Submit to start</p>
 </div>
 """
 
-demo = gr.Interface(
+appTab = gr.Interface(
     fn=process_file,
     inputs=[
         gr.File(label="Upload Folder"),
@@ -170,11 +256,24 @@ demo = gr.Interface(
         gr.Number(label="Brightness", value=-150),
         gr.Number(label="Contrast", value=120)
     ],
-    outputs=[gr.Plot(label="Camera calibration Visualization"),gr.File(label="Camera calibration matrices File (.mat)"),],
+    outputs=[gr.Text(label="Errors:"),
+             gr.File(label="Camera calibration matrices File (.mat)"),
+             gr.Plot(label="Camera calibration Visualization"),
+             ]
+)
+def helpfunction():
+    return "online"
+
+helpTab = gr.Interface(
+    fn=helpfunction,
+    inputs=None,
+    outputs=gr.Text(label="Status:"),
     description=description_html
 )
 
 
+
+
 if __name__ == "__main__":
-    
+    demo = gr.TabbedInterface([appTab, helpTab], ["VICAN interface", "How to use"])
     demo.launch()
