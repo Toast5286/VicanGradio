@@ -1,5 +1,4 @@
 import gradio as gr
-import cv2
 import os
 import shutil
 import zipfile
@@ -7,9 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import savemat
 import tempfile
-from src.camera_gen import JSONCam
-from src.object_calib import object_calib
-from src.pose_est import pose_est
+
+import sys
+sys.path.append('src')
+
+from object_calib import object_calib
+from pose_est import pose_est
 
 # Example intrinsic and extrinsic matrices
 K = np.array([
@@ -78,7 +80,7 @@ def create_config_file(marker_size, marker_ids, brightness, contrast):
     config_content = f"""object_path:object-images
 object_calib:cube-calib.pt
 cameras_path:cameras-images
-cameras_pose_est:pose_est.mat
+cameras_pose_est:pose_est.json
 aruco:DICT_ARUCO_ORIGINAL
 marker_size:{marker_size}
 marker_ids:{marker_ids}
@@ -86,7 +88,7 @@ brightness:{brightness}
 contrast:{contrast}
 """
     # Write to a text file
-    with open("./CalibrationData/config.txt", "w") as file:
+    with open("/CalibrationData/config.txt", "w") as file:
         file.write(config_content)
 
 def camera_to_world(extrinsics):
@@ -148,15 +150,15 @@ def process_file(fileobj,marker_size, marker_ids, brightness, contrast):
     if validation_error == "The uploaded file is valid.":
 
         #Create CalibrationData directory
-        UploadDir = './CalibrationData/'
+        UploadDir = '/CalibrationData'
         path = UploadDir
         if not os.path.exists(UploadDir):
             os.mkdir(UploadDir)
 
         #copy and change directory
         shutil.copy(fileobj,UploadDir)
-        path += os.path.basename(fileobj)
-
+        path = os.path.join(UploadDir, os.path.basename(fileobj))
+        print(path)
         #Unzips file
         with zipfile.ZipFile(path, 'r') as zip_ref:
             zip_ref.extractall(UploadDir)
@@ -168,9 +170,9 @@ def process_file(fileobj,marker_size, marker_ids, brightness, contrast):
         #JSONCam("./CalibrationData/object-images/cameras.json")
 
         #TODO:Run Vican here
-        object_calib("./CalibrationData")
+        object_calib(UploadDir)
 
-        pose_est("./CalibrationData")
+        pose_est(UploadDir)
         
         '''
         #generates 3D visualization and outputs file
@@ -185,17 +187,17 @@ def process_file(fileobj,marker_size, marker_ids, brightness, contrast):
 
 #Main---------------------------------------------------------------------
 
-with open('description.html', 'r') as file:
+with open('src/description.html', 'r') as file:
     description_html = file.read()
 
 appTab = gr.Interface(
     fn=process_file,
     inputs=[
         gr.File(label="Upload Folder"),
-        gr.Number(label="Marker Size", value=0.276),
-        gr.Textbox(label="Marker IDs (comma-separated)", value="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"),
-        gr.Number(label="Brightness", value=-150),
-        gr.Number(label="Contrast", value=120)
+        gr.Number(label="Marker Size", value=0.088),
+        gr.Textbox(label="Marker IDs (comma-separated)", value="2,3,4,5,6,7,8,9,10,11,12,13"),
+        gr.Number(label="Brightness", value=-50),
+        gr.Number(label="Contrast", value=100)
     ],
     outputs=[gr.Text(label="Errors:"),
              gr.File(label="Camera calibration matrices File (.mat)"),

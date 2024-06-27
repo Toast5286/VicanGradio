@@ -12,12 +12,9 @@ RUN pip install --upgrade pip && \
     pip install -r requirements.txt && \
     rm requirements.txt
 
-COPY description.html /vican/description.html
-COPY gradioV2.py /vican/gradioV2.py
-
 # Expose the port Gradio will run on
 EXPOSE 7860
 
 ENV GRADIO_SERVER_NAME="0.0.0.0"
 
-CMD ["python", "gradioV2.py"]
+CMD ["python", "src/gradioV2.py"]
