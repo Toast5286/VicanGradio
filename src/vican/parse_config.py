@@ -9,7 +9,7 @@ def parse_config(DATASET_PATH, must_have_keys):
             if key == 'marker_size':
                 config[key] = float(value)
             elif key == 'marker_ids':
-                config[key] = list(map(str, value.split(',')))
+                config[key] = list(map(str, value.rstrip('\n').split(',')))
             elif key == 'brightness':
                 config[key] = int(value)
             elif key == 'contrast':

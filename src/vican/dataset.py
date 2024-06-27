@@ -30,7 +30,7 @@ class Dataset(object):
         self.cam_path = os.path.join(root, "cameras.json")
 
         assert os.path.isfile(self.cam_path)
-
+        print(f"Reading dataset from {root}")
         self.read_cameras()
         self.read_im_data()
         self.read_object()
@@ -53,10 +53,10 @@ class Dataset(object):
             
             self.cams[k] = Camera(id=k,
                                   intrinsics=K,
-                                  distortion=np.array(v["distortion"], dtype=float),
+                                  distortion=np.array(v["distortion"], dtype=np.float64),
                                 #   extrinsics=SE3(R=np.array(v['R']),
                                 #                  t=np.array(v['t'])),
-                                  extrinsics=None,
+                                  extrinsics=SE3(R=np.eye(3), t=np.zeros(3)),
                                   resolution_x=v["resolution_x"],
                                   resolution_y=v["resolution_y"])
             
@@ -92,7 +92,7 @@ class Dataset(object):
             filenames = os.listdir(os.path.join(self.root, t))
             for filename in filenames:
                 if filename.endswith('.jpg') or filename.endswith('.png'):
-                    cam_id = str(int(filename.split('.')[0]))
+                    cam_id = filename.split('.')[0]
                     self.im_data['cam_id'].append(cam_id)
                     self.im_data['filename'].append(os.path.join(self.root, t, filename))
                     self.im_data['timestamp'].append(t)
