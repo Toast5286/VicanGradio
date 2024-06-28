@@ -6,6 +6,7 @@ RUN apt-get update && \
 WORKDIR /vican
 
 ADD src /vican/src
+ADD auxiliarScripts /vican/auxiliarScripts
 ADD requirements.txt /vican
 
 RUN pip install --upgrade pip && \

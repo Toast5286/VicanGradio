@@ -16,3 +16,4 @@ typing_extensions==4.12.2
 matplotlib==3.9.0
 shutils==0.1.0
 gradio==4.31.5
+plotly==5.22.0

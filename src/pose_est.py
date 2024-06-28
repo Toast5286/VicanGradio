@@ -55,7 +55,7 @@ def pose_est(DATASET_PATH='/dataset'):
         json_data[i] = {'R': pose_est[i].R().tolist(), 't': pose_est[i].t().tolist()}
     
     with open(os.path.join(DATASET_PATH, config['cameras_pose_est']), 'w') as f:
-        json.dump(json_data, f)
+        json.dump(json_data, f,indent=4)
 
 if __name__ == "__main__":
     pose_est()
