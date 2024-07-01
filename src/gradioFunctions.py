@@ -2,14 +2,14 @@ import os
 import shutil
 import zipfile
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.io import savemat
 import tempfile
 import json
 
 from object_calib import object_calib
 from pose_est import pose_est
-from vican.dataset import Dataset
+
+from vican.geometry import SE3
+from vican.cam import Camera
 
 import sys
 
@@ -36,25 +36,31 @@ def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast)
         object_calib(UploadDir)
         pose_est(UploadDir)
 
-        # Convert pose_est.json to string
-        with open((UploadDir+"/pose_est.json"), 'r') as f:
-            pose_estData = json.load(f)
-
-        '''
-        dataset = Dataset(root=(UploadDir+"/cameras-images"))
-        for cam_id, cam in dataset.cams.items():
-            cam.extrinsics = pose_estData[cam_id]
-        print(cam.extrinsics)
-        
-        plot_cams_3D(dataset.cams.values())
-        '''
+        # Convert pose_est.json to string and displays the camera calibration in HTML
+        Plot, pose_estData = PlotCamCalib((UploadDir+"/pose_est.json"))
         
         
-        return "No Errors", UploadDir + '/pose_est.json',json.dumps(pose_estData,indent=4), None
+        return "No Errors", UploadDir + '/pose_est.json',json.dumps(pose_estData,indent=4), Plot
     else:
 
         return validation_error, json.dumps({}),"", None
     
+
+#Plots the camera calibration from a JSON file in to a HTML file and returns the JSON file's contents
+def PlotCamCalib(JSONPath):
+    cameras = []
+    with open(JSONPath, 'r') as f:
+        pose_estData = json.load(f)
+
+        for i in pose_estData:
+            if '_' not in i:
+                s = SE3(R=np.array(pose_estData[i]['R']), t=np.array(pose_estData[i]['t']))
+                c = Camera(i, np.eye(3), np.zeros(8), s, 1024, 1024)
+                cameras.append(c)
+
+    Plot = plot_cams_3D(cameras,renderer="png")
+
+    return Plot, pose_estData
 
 
 #Unzips file and creates the config file

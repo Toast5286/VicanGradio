@@ -144,6 +144,7 @@ def plot_cams_3D(cams: Iterable[Camera],
                                       z=axs[i,2,j,:]).update_traces(line_color=c[j]).data)
     fig.update_scenes(aspectmode='data')
     fig.show(renderer=renderer)
+    return fig
 
 
 def plot2D(ax,

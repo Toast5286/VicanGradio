@@ -19,7 +19,7 @@ appTab = gr.Interface(
     outputs=[gr.Text(label="Errors:"),
              gr.File(label="Download camera calibration matrices File (.JSON)"),
              gr.Text(label="Camera calibration matrices File content"),
-             gr.HTML(label="Camera calibration Visualization"),
+             gr.Plot(label="Camera calibration Visualization"),
              ]
 )
 
