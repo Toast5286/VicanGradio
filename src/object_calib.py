@@ -1,5 +1,5 @@
 import os
-import torch
+import pickle
 
 from vican.cam import estimate_pose_mp
 from vican.dataset import Dataset
@@ -21,7 +21,8 @@ def object_calib(DATASET_PATH='/dataset'):
                         brightness=config['brightness'],
                         contrast=config['contrast'])
 
-    torch.save(aux, os.path.join(DATASET_PATH, config['object_calib']))
+    with open(os.path.join(DATASET_PATH, config['object_calib']), 'wb') as f:
+        pickle.dump(aux,f)
 
 if __name__ == "__main__":
     object_calib()

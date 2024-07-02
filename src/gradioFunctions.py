@@ -4,6 +4,9 @@ import zipfile
 import numpy as np
 import tempfile
 import json
+import gradio as gr
+import time
+import threading
 
 from object_calib import object_calib
 from pose_est import pose_est
@@ -19,18 +22,24 @@ from auxiliarScripts.plot import plot_cams_3D
 
 
 
-def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast):
+def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast, req: gr.Request):
+    UploadDir = '/CalibrationData_' + req.session_hash
 
-    validation_error,NObjFrames = validate_zip_file(fileobj)
+    if os.path.exists(UploadDir):
+        validation_error = "The uploaded file is valid."
+    else:
+        validation_error, NObjFrames = validate_zip_file(fileobj)
 
     if validation_error == "The uploaded file is valid.":
 
-        #Unzips file and creates the config file
-        UploadDir = '/CalibrationData'
-        Unzip(UploadDir, fileobj, arucos, marker_size, marker_ids, brightness, contrast)
+        if not os.path.exists(UploadDir):
+            #Unzips file and creates the config file
+            Unzip(UploadDir, fileobj)
+            #Correct the object-images/cameras.json file to have the correct structure
+            objCalCameraJSON(NObjFrames,(UploadDir+"/object-images/cameras.json"))
 
-        #Correct the object-images/cameras.json file to have the correct structure
-        objCalCameraJSON(NObjFrames,(UploadDir+"/object-images/cameras.json"))
+        #creates config
+        create_config_file(UploadDir, arucos, marker_size, marker_ids, brightness, contrast)
 
         #Run Vican
         object_calib(UploadDir)
@@ -39,11 +48,26 @@ def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast)
         # Convert pose_est.json to string and displays the camera calibration in HTML
         Plot, pose_estData = PlotCamCalib((UploadDir+"/pose_est.json"))
         
+        threading.Thread(target=cleanup, args=(UploadDir,720,10)).start()
         
         return "No Errors", UploadDir + '/pose_est.json',json.dumps(pose_estData,indent=4), Plot
     else:
 
         return validation_error, json.dumps({}),"", None
+
+   
+#This function will check <NChecks> times if a directory has been deleted with a frequency of <checkFreq> in seconds
+#if it hasnt been deleted at the end of <NChecks>, it will delete it
+def cleanup(dir,NChecks, checkFreq):
+
+    #Check if the directory hasnt been deleted yet and if it has, kill this thread
+    for i in range(NChecks):
+        time.sleep(checkFreq)
+        if not os.path.isdir(dir):
+            return
+        
+    # Delete the directory
+    shutil.rmtree(dir)
     
 
 #Plots the camera calibration from a JSON file in to a HTML file and returns the JSON file's contents
@@ -64,7 +88,7 @@ def PlotCamCalib(JSONPath):
 
 
 #Unzips file and creates the config file
-def Unzip(outputDir, fileobj, arucos, marker_size, marker_ids, brightness, contrast):
+def Unzip(outputDir, fileobj):
         
     #Create CalibrationData directory
     UploadDir = outputDir
@@ -80,15 +104,13 @@ def Unzip(outputDir, fileobj, arucos, marker_size, marker_ids, brightness, contr
     with zipfile.ZipFile(path, 'r') as zip_ref:
         zip_ref.extractall(UploadDir)
         
-    #creates config
-    create_config_file(arucos, marker_size, marker_ids, brightness, contrast)
 
 
 
 # Function to create the text file with user inputs
-def create_config_file(arucos, marker_size, marker_ids, brightness, contrast):
+def create_config_file(UploadDir, arucos, marker_size, marker_ids, brightness, contrast):
     config_content = f"""object_path:object-images
-object_calib:cube-calib.pt
+object_calib:cube-calib.pkl
 cameras_path:cameras-images
 cameras_pose_est:pose_est.json
 aruco:{arucos}
@@ -98,7 +120,7 @@ brightness:{brightness}
 contrast:{contrast}
 """
     # Write to a text file
-    with open("/CalibrationData/config.txt", "w") as file:
+    with open(UploadDir + "/config.txt", "w") as file:
         file.write(config_content)
 
 
@@ -124,6 +146,9 @@ def objCalCameraJSON(NofFrames,JSONPath):
 def validate_zip_file(zip_file):
 
     NObjFrames = 0
+
+    if zip_file==None:
+        return "No file was found in memory. Make sure your last upload was in the past 2h."
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
