@@ -6,7 +6,6 @@ import tempfile
 import json
 import gradio as gr
 import time
-import threading
 
 from object_calib import object_calib
 from pose_est import pose_est
@@ -48,8 +47,6 @@ def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast,
         # Convert pose_est.json to string and displays the camera calibration in HTML
         Plot, pose_estData = PlotCamCalib((UploadDir+"/pose_est.json"))
         
-        threading.Thread(target=cleanup, args=(UploadDir,720,10)).start()
-        
         return "No Errors", UploadDir + '/pose_est.json',json.dumps(pose_estData,indent=4), Plot
     else:
 
@@ -58,16 +55,21 @@ def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast,
    
 #This function will check <NChecks> times if a directory has been deleted with a frequency of <checkFreq> in seconds
 #if it hasnt been deleted at the end of <NChecks>, it will delete it
-def cleanup(dir,NChecks, checkFreq):
+def cleanup(NChecks, checkFreq, req: gr.Request):
+
+    dir = '/CalibrationData_' + req.session_hash
 
     #Check if the directory hasnt been deleted yet and if it has, kill this thread
     for i in range(NChecks):
         time.sleep(checkFreq)
         if not os.path.isdir(dir):
-            return
+            return "All Cleared"
         
     # Delete the directory
-    shutil.rmtree(dir)
+    if os.path.isdir(dir):
+        shutil.rmtree(dir)
+
+    return "All Cleared"
     
 
 #Plots the camera calibration from a JSON file in to a HTML file and returns the JSON file's contents
