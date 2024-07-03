@@ -2,15 +2,16 @@ import gradio as gr
 import sys
 sys.path.append('src')
 
-from gradioFunctions import process_file,cleanup
+from gradioFunctions import cleanup
+from CamGradioFunctions import CamProcess_file
+from ObjGradioFunctions import ObjProcess_file
 
 #Define the "How to use" HTML description
 with open('src/description.html', 'r') as file:
     description_html = file.read()
 
 def CleanUpHelpfunction(req: gr.Request):
-    return cleanup(0,0,req)
-
+    return cleanup(0,0,req),None, "All Cleared", None,"",None
 
 
 with gr.Blocks() as demo:
@@ -20,32 +21,66 @@ with gr.Blocks() as demo:
         gr.HTML(description_html)
 
 
-    #Define the "VICAN interface" tab
-    with gr.Tab("VICAN interface"):
+    #Define the "Object Calibration interface" tab
+    with gr.Tab("Object Calibration interface"):
         with gr.Row():
             #INPUTS
             with gr.Column(scale=1):
-                File = gr.File(label="Upload Folder")
-                ArucoType = gr.Textbox(label="aruco", value="DICT_ARUCO_ORIGINAL")
-                MarkerSize = gr.Number(label="Marker Size", value=0.088)
-                MarkerID = gr.Textbox(label="Marker IDs (comma-separated)", value="2,3,4,5,6,7,8,9,10,11,12,13")
-                Brightness = gr.Number(label="Brightness", value=-50)
-                Contrast = gr.Number(label="Contrast", value=100)
-                #BUTTON
-                SubmitBtn = gr.Button("Submit")
+                ObjInputFile = gr.File(label="Upload Folder for Object Calibration")
+
+                ObjArucoType = gr.Textbox(label="aruco", value="DICT_ARUCO_ORIGINAL")
+                ObjMarkerSize = gr.Number(label="Marker Size", value=0.088)
+                ObjMarkerID = gr.Textbox(label="Marker IDs (comma-separated)", value="2,3,4,5,6,7,8,9,10,11,12,13")
+                ObjBrightness = gr.Number(label="Brightness", value=-50)
+                ObjContrast = gr.Number(label="Contrast", value=100)
+
+                ObjSubmitBtn = gr.Button("Submit File for Object Calibration")
 
             #OUTPUTS
             with gr.Column(scale=1):
-                Errors = gr.Text(label="Errors:")
-                OutputFile = gr.File(label="Download camera calibration matrices File (.JSON)")
-                OutputFileText = gr.Text(label="Camera calibration matrices File content")
-                CameraPlot = gr.Plot(label="Camera calibration Visualization")
+                ObjErrors = gr.Text(label="Errors:")
+                ObjOutputFile = gr.File(label="Download calibration matrices File (.JSON)")
 
-                #BUTTONS
+                #BUTTON
                 ClearBtn = gr.Button("Clear Memory")
 
-    SubmitBtn.click(fn=process_file,inputs=[File,ArucoType,MarkerSize,MarkerID,Brightness,Contrast],outputs=[Errors,OutputFile,OutputFileText,CameraPlot])
-    ClearBtn.click(fn=CleanUpHelpfunction,inputs=[],outputs=Errors)
+
+    #Define the "Camera Pose Estimation interface" tab
+    with gr.Tab("Camera Pose Estimation interface"):
+        with gr.Row():
+            #INPUTS
+            with gr.Column(scale=1):
+                CamInputFile = gr.File(label="Upload Folder for Camera Calibration")
+
+                CamArucoType = gr.Textbox(label="aruco", value="DICT_ARUCO_ORIGINAL")
+                CamMarkerSize = gr.Number(label="Marker Size", value=0.088)
+                CamMarkerID = gr.Textbox(label="Marker IDs (comma-separated)", value="2,3,4,5,6,7,8,9,10,11,12,13")
+                CamBrightness = gr.Number(label="Brightness", value=-50)
+                CamContrast = gr.Number(label="Contrast", value=100)
+
+                #BUTTON
+                CamSubmitBtn = gr.Button("Submit File for Camera Calibration")
+
+            with gr.Column(scale=1):
+                CamErrors = gr.Text(label="Errors:")
+                CamOutputFile = gr.File(label="Download calibration matrices File (.JSON)")
+                CamOutputFileText = gr.Text(label="Calibration matrices File content")
+                CamCameraPlot = gr.Plot(label="Camera calibration Visualization")
+
+                #BUTTON
+                ClearBtn = gr.Button("Clear Memory")
+
+                
+    #Action when ObjSubmit button is pressed
+    ObjSubmitBtn.click(fn=ObjProcess_file,inputs=[ObjInputFile,ObjArucoType,ObjMarkerSize,ObjMarkerID,ObjBrightness,ObjContrast],outputs=[ObjErrors,ObjOutputFile])
+    
+    #Action when ObjSubmit button is pressed
+    CamSubmitBtn.click(fn=CamProcess_file,inputs=[CamInputFile,CamArucoType,CamMarkerSize,CamMarkerID,CamBrightness,CamContrast],outputs=[CamErrors,CamOutputFile,CamOutputFileText,CamCameraPlot])
+    
+    #Action when ClearBtn button is pressed
+    ClearBtn.click(fn=CleanUpHelpfunction,inputs=[],outputs=[ObjErrors,ObjOutputFile,CamErrors,CamOutputFile,CamOutputFileText,CamCameraPlot])
+
+    #Clean Up when the user closes the tab
     demo.unload(CleanUpHelpfunction)
 
 
