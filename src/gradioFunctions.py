@@ -50,7 +50,7 @@ def process_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast,
         return "No Errors", UploadDir + '/pose_est.json',json.dumps(pose_estData,indent=4), Plot
     else:
 
-        return validation_error, json.dumps({}),"", None
+        return validation_error, None,"", None
 
    
 #This function will check <NChecks> times if a directory has been deleted with a frequency of <checkFreq> in seconds
