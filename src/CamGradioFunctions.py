@@ -1,13 +1,12 @@
 import os
 import zipfile
-import numpy as np
 import tempfile
 import json
 import gradio as gr
 
 from pose_est import pose_est
 from pose_est import pose_est
-from gradioFunctions import Unzip, create_config_file, PlotCamCalib
+from gradioFunctions import Unzip, create_config_file, PlotCamCalib,ConfigValid
 
 def CamProcess_file(fileobj, arucos, marker_size, marker_ids, brightness, contrast, req: gr.Request):
     UploadDir = '/CalibrationData_' + req.session_hash
@@ -16,8 +15,9 @@ def CamProcess_file(fileobj, arucos, marker_size, marker_ids, brightness, contra
         validation_error = "The uploaded file is valid."
     else:
         validation_error = CamValidate_zip_file(fileobj)
+        config_error = ConfigValid(arucos, marker_size, marker_ids, brightness, contrast)
 
-    if validation_error == "The uploaded file is valid.":
+    if (validation_error == "The uploaded file is valid.") and (config_error == "The uploaded configs are valid."):
 
         if not os.path.exists(UploadDir+'/cameras-images'):
             #Unzips file and creates the config file
@@ -33,9 +33,11 @@ def CamProcess_file(fileobj, arucos, marker_size, marker_ids, brightness, contra
         Plot, pose_estData = PlotCamCalib((UploadDir+"/pose_est.json"))
         
         return "No Errors", UploadDir + '/pose_est.json',json.dumps(pose_estData,indent=4), Plot
-    else:
-
+    
+    elif validation_error != "The uploaded file is valid.":
         return validation_error, None,"", None
+    else:
+        return config_error, None,"", None
 
 
 

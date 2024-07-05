@@ -2,10 +2,10 @@ import os
 import shutil
 import zipfile
 import numpy as np
-import tempfile
 import json
 import gradio as gr
 import time
+import re
 
 from vican.geometry import SE3
 from vican.cam import Camera
@@ -91,5 +91,23 @@ contrast:{contrast}
         file.write(config_content)
 
 
- 
- 
+def ConfigValid(arucos, marker_size, marker_ids, brightness, contrast):
+    if marker_size == None:
+        return "Marker size can not be None."
+    if brightness == None:
+        return "Brightness can not be None."
+    if contrast == None:
+        return "Contrast can not be None."
+    
+    ValidArucoDic = ["DICT_4X4_50", "DICT_4X4_100", "DICT_4X4_250", "DICT_4X4_1000", "DICT_5X5_50", "DICT_5X5_100", "DICT_5X5_250", "DICT_5X5_1000", "DICT_6X6_50", "DICT_6X6_100", "DICT_6X6_250", "DICT_6X6_1000", "DICT_7X7_50", "DICT_7X7_100", "DICT_7X7_250", "DICT_7X7_1000", "DICT_ARUCO_ORIGINAL", "DICT_APRILTAG_16h5", "DICT_APRILTAG_25h9", "DICT_APRILTAG_36h10", "DICT_APRILTAG_36h11"]
+    if (arucos==None) or (not any(arucos in x for x in ValidArucoDic)):
+        return "The Aruco Dictionary was not found."
+    
+    if marker_ids == None:
+        return "Marker_ids can not be None."
+    
+    pattern = r'^(\d+,)+'
+    if not re.match(pattern, marker_ids):
+        return "Marker_ids needs to folow a pattern\n Ex.:\"2,3,7,15,23,\n"
+    
+    return "The uploaded configs are valid."

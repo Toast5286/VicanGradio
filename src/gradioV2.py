@@ -52,9 +52,9 @@ with gr.Blocks() as demo:
             with gr.Column(scale=1):
                 CamInputFile = gr.File(label="Upload Folder for Camera Calibration")
 
-                CamArucoType = gr.Textbox(label="aruco", value="DICT_ARUCO_ORIGINAL")
+                CamArucoType = gr.Textbox(label="Aruco Dictionary(from OpenCV)", value="DICT_ARUCO_ORIGINAL")
                 CamMarkerSize = gr.Number(label="Marker Size", value=0.088)
-                CamMarkerID = gr.Textbox(label="Marker IDs (comma-separated)", value="2,3,4,5,6,7,8,9,10,11,12,13")
+                CamMarkerID = gr.Textbox(label="Marker IDs (comma-separated)", value="2,3,4,5,6,7,8,9,10,11,12,13,")
                 CamBrightness = gr.Number(label="Brightness", value=-50)
                 CamContrast = gr.Number(label="Contrast", value=100)
 

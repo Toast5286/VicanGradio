@@ -1,13 +1,12 @@
 import os
 import zipfile
-import numpy as np
 import tempfile
 import json
 import gradio as gr
 
 from object_calib import object_calib
 from object_calib import object_calib
-from gradioFunctions import Unzip, create_config_file
+from gradioFunctions import Unzip, create_config_file,ConfigValid
 
 
 
@@ -18,8 +17,9 @@ def ObjProcess_file(fileobj, arucos, marker_size, marker_ids, brightness, contra
         validation_error = "The uploaded file is valid."
     else:
         validation_error, NObjFrames = ObjValidate_zip_file(fileobj)
+        config_error = ConfigValid(arucos, marker_size, marker_ids, brightness, contrast)
 
-    if validation_error == "The uploaded file is valid.":
+    if (validation_error == "The uploaded file is valid.") and (config_error == "The uploaded configs are valid."):
 
         if not os.path.exists(UploadDir+'/object-images'):
             #Unzips file and creates the config file
@@ -34,9 +34,10 @@ def ObjProcess_file(fileobj, arucos, marker_size, marker_ids, brightness, contra
         object_calib(UploadDir)
         
         return "No Errors", UploadDir + '/cube-calib.pkl'
-    else:
-
+    elif validation_error != "The uploaded file is valid.":
         return validation_error, None
+    else:
+        return config_error, None
     
 
 
@@ -63,7 +64,7 @@ def ObjValidate_zip_file(zip_file):
     NObjFrames = 0
 
     if zip_file==None:
-        return "No file was found in memory. Make sure your last upload was in the past 2h."
+        return "No file was found in memory. Make sure your last upload was in the past 2h.", NObjFrames
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
