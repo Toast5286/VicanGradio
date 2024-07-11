@@ -1,21 +1,21 @@
-# Use the official Python base image
-FROM python:3.9-slim
+FROM python:3.9-slim-bullseye
 
-# Set the working directory
-WORKDIR /app
+RUN apt-get update && \
+    apt-get install -y libgl1-mesa-glx libglib2.0-0
 
-# Copy the requirements file to the container
-COPY requirements.txt .
+WORKDIR /vican
 
-# Install the required Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+ADD src /vican/src
+ADD auxiliarScripts /vican/auxiliarScripts
+ADD requirements.txt /vican
 
-# Copy the rest of the application code to the container
-COPY . .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    rm requirements.txt
 
 # Expose the port Gradio will run on
 EXPOSE 7860
 
 ENV GRADIO_SERVER_NAME="0.0.0.0"
-# Command to run the application
-CMD ["python", "gradioV1.py"]
+
+CMD ["python", "src/gradioV2.py"]

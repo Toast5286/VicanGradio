@@ -1,0 +1,112 @@
+<div style="background-color: #d9d9d9; color: #000000; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif;">
+    <h2>Object Calibration</h2>
+    <p>
+    <p>1) Create a zip with the following structure:
+    <pre style="background-color: #ffffff; padding: 10px; border-radius: 5px; overflow-x: auto;">
+    &lt;uploaded-folder&gt.zip;
+    &#x2502;
+    &#x2514;&#x2500;&#x2500; object-images
+           &#x251C;&#x2500;&#x2500; 0
+           &#x2502;   &#x2514;&#x2500;&#x2500; 0.jpg
+           &#x251C;&#x2500;&#x2500; 1
+           &#x2502;   &#x2514;&#x2500;&#x2500; 1.jpg
+           &#x251C;&#x2500;&#x2500; ...
+           &#x2514;&#x2500;&#x2500; cameras.json
+    </pre>
+    <p>1.1) The object-images folders structure's is object-images/&lt;timestep&gt;/&lt;timestep&gt;.jpg</p>
+    <p>1.2) The object-images/cameras.json must have all the instrinsic parameters and the following structure:
+    <pre style="background-color: #ffffff; padding: 10px; border-radius: 5px; overflow-x: auto;">
+    {
+        "0": {
+            "fx": (...),
+            "fy": (...),
+            "cx": (...),
+            "cy": (...),
+            "resolution_x": (...),
+            "resolution_y": (...),
+            "clip_start": (...),
+            "clip_end": (...),
+            "t": [0,0,0],
+            "R": [
+                [1,0,0],
+                [0,1,0],
+                [0,0,1]
+            ],
+            "distortion": [0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+    </pre>
+    <p>2) Selec the "Object Calibration interface" Tab on the top of the website</p>
+    <p>3) Upload the zip file</p>
+    <p>4) Fill the desired configurations </p>
+    <p>5) Press "Submit File for Object Calibration" button to start</p>
+    <p>6) Download the cube-calib.pkl file. This file contains the relation between the detected arucos. To use thise calibrated object to estimate the camera pose follow the next step</p>
+    <hr>
+    <h2>Camera Pose Estimation</h2>
+    <p>
+    <p>1) Create a zip with the following structure:
+    <pre style="background-color: #ffffff; padding: 10px; border-radius: 5px; overflow-x: auto;">
+        &lt;uploaded-folder&gt.zip;
+        &#x2502;
+        &#x251C;&#x2500;&#x2500; cameras-images
+        &#x2502;   &#x251C;&#x2500;&#x2500; 0
+        &#x2502;   &#x251C;&#x2500;&#x2500; 1.jpg
+        &#x2502;   &#x251C;&#x2500;&#x2500; 10.jpg
+        &#x2502;   &#x251C;&#x2500;&#x2500; 11.jpg
+        &#x2502;   &#x2514;&#x2500;&#x2500; 12.jpg
+        &#x251C;&#x2500;&#x2500; 1
+        &#x2502;   &#x251C;&#x2500;&#x2500; 1.jpg
+        &#x2502;   &#x251C;&#x2500;&#x2500; 10.jpg
+        &#x2502;   &#x251C;&#x2500;&#x2500; 11.jpg
+        &#x2502;   &#x2514;&#x2500;&#x2500; 15.jpg
+        &#x251C;&#x2500;&#x2500; ...
+        &#x2514;&#x2500;&#x2500; cameras.json
+        &#x2502;
+        &#x2514;&#x2500;&#x2500; cube-calib.pkl
+    </pre>
+    <p>1.1) The cameras-images folders structure's is cameras-images/&lt;timestep&gt;/&lt;camera_id&gt;.jpg.
+    <p>1.2) The cameras-images/cameras.json must have all the instrinsic parameters and the following structure:
+    <pre style="background-color: #ffffff; padding: 10px; border-radius: 5px; overflow-x: auto;">
+    {
+        "0": {
+            "fx": (...),
+            "fy": (...),
+            "cx": (...),
+            "cy": (...),
+            "resolution_x": (...),
+            "resolution_y": (...),
+            "clip_start": (...),
+            "clip_end": (...),
+            "t": [0,0,0],
+            "R": [
+                [1,0,0],
+                [0,1,0],
+                [0,0,1]
+            ],
+            "distortion": [0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+        ...
+        "N": {
+            "fx": (...),
+            "fy": (...),
+            "cx": (...),
+            "cy": (...),
+            "resolution_x": (...),
+            "resolution_y": (...),
+            "clip_start": (...),
+            "clip_end": (...),
+            "t": [0,0,0],
+            "R": [
+                [1,0,0],
+                [0,1,0],
+                [0,0,1]
+            ],
+            "distortion": [0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+    }
+    </pre>
+    <p>Where N represents the number of the last camera.
+    <p>2) Selec the "Camera Pose Estimation interface" Tab on the top of the website</p>
+    <p>3) Upload the zip file</p>
+    <p>4) Fill the desired configurations </p>
+    <p>5) Press "Submit File for Camera Calibration" button to start</p>
+</div>
