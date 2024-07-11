@@ -15,7 +15,7 @@ Clone the project
 Go to the project directory and run 
 
 ```bash
-    docker build -t gradio_v3 .
+  docker build -t gradio_v3 .
 ```
 
 to create a Docker image with the necessery files. Dependecies will be automatically installed on the Docker image.
