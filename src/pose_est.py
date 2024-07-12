@@ -6,7 +6,7 @@ import scipy.io as sio
 import json
 
 from vican.cam import estimate_pose_mp
-from vican.bipgo import bipartite_se3sync, object_bipartite_se3sync
+from vican.bipgo import bipartite_se3sync
 from vican.dataset import Dataset
 from vican.parse_config import parse_config
 
@@ -16,16 +16,8 @@ def pose_est(DATASET_PATH='/dataset'):
 
     dataset = Dataset(root=os.path.join(DATASET_PATH, config['cameras_path']))
 
-    with open(os.path.join(DATASET_PATH, config['object_calib']),'rb') as f:
-        aux = pickle.load(f)
-
-    obj_pose_est = object_bipartite_se3sync(aux,
-                                            noise_model_r=lambda edge : 0.01 * Polygon(zip(edge['corners'][:,0], edge['corners'][:,1])).area**1,
-                                            noise_model_t=lambda edge : 0.001 * Polygon(zip(edge['corners'][:,0], edge['corners'][:,1])).area**1,
-                                            edge_filter=lambda edge : edge['reprojected_err'] < 0.5,
-                                            maxiter=4,
-                                            lsqr_solver="conjugate_gradient",
-                                            dtype=np.float64)
+    with open(os.path.join(DATASET_PATH, config['object_calib']),'r') as f:
+        obj_pose_est = pickle.load(f)
     
     cam_marker_edges = estimate_pose_mp(cams=dataset.im_data['cam'],
                                         im_filenames=dataset.im_data['filename'],

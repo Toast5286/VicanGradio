@@ -33,7 +33,7 @@ def ObjProcess_file(fileobj, arucos, marker_size, marker_ids, brightness, contra
         #Run Vican
         object_calib(UploadDir)
         
-        return "No Errors", UploadDir + '/cube-calib.pkl'
+        return "No Errors", UploadDir + '/cube-calib.json'
     elif validation_error != "The uploaded file is valid.":
         return validation_error, None
     else:

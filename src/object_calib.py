@@ -1,9 +1,12 @@
 import os
-import pickle
+import json
+from shapely.geometry import Polygon
+import numpy as np
 
 from vican.cam import estimate_pose_mp
 from vican.dataset import Dataset
 from vican.parse_config import parse_config
+from vican.bipgo import object_bipartite_se3sync
 
 def object_calib(DATASET_PATH='/dataset'):
     must_have_keys = ['object_path', 'object_calib', 'aruco', 'marker_size', 'marker_ids', 'brightness', 'contrast']
@@ -20,9 +23,25 @@ def object_calib(DATASET_PATH='/dataset'):
                         flags='SOLVEPNP_IPPE_SQUARE',
                         brightness=config['brightness'],
                         contrast=config['contrast'])
+    
+    obj_pose_est = object_bipartite_se3sync(aux,
+                                            noise_model_r=lambda edge : 0.01 * Polygon(zip(edge['corners'][:,0], edge['corners'][:,1])).area**1,
+                                            noise_model_t=lambda edge : 0.001 * Polygon(zip(edge['corners'][:,0], edge['corners'][:,1])).area**1,
+                                            edge_filter=lambda edge : edge['reprojected_err'] < 0.5,
+                                            maxiter=4,
+                                            lsqr_solver="conjugate_gradient",
+                                            dtype=np.float64)
 
-    with open(os.path.join(DATASET_PATH, config['object_calib']), 'wb') as f:
-        pickle.dump(aux,f)
+    json_data = {}
+    for cam_id, pose in obj_pose_est.items():    
+        #check if cam_id is a valid camera index
+        if "_" in cam_id:
+            continue
+        json_data[int(cam_id)] = {'R': obj_pose_est[cam_id].R().tolist(), 't': obj_pose_est[cam_id].t().tolist()}
+
+    with open(os.path.join(DATASET_PATH, config['object_calib']), 'w') as f:
+
+        json.dump(json_data,f,indent=4)
 
 if __name__ == "__main__":
     object_calib()

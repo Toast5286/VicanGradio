@@ -77,7 +77,7 @@ def Unzip(outputDir, fileobj):
 # Function to create the text file with user inputs
 def create_config_file(UploadDir, arucos, marker_size, marker_ids, brightness, contrast):
     config_content = f"""object_path:object-images
-object_calib:cube-calib.pkl
+object_calib:cube-calib.json
 cameras_path:cameras-images
 cameras_pose_est:pose_est.json
 aruco:{arucos}
