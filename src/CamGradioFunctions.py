@@ -69,7 +69,7 @@ def CamValidate_zip_file(zip_file):
         
         #CAMERA.JSON CHECK
         #Check if "cameras-images" contains a "cameras.json" and a "cube-calib.pkl"
-        if not os.path.isfile(os.path.join(tmpdir,'cube-calib.pkl')):
+        if not os.path.isfile(os.path.join(tmpdir,'cube-calib.json')):
             return "Zip file does not contain the file 'cube-calib.pkl' (the onject calibration file)." 
                 
         if not os.path.isfile(os.path.join(dir_cam, 'cameras.json')):

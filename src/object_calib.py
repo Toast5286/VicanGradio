@@ -40,7 +40,6 @@ def object_calib(DATASET_PATH='/dataset'):
         json_data[int(cam_id)] = {'R': obj_pose_est[cam_id].R().tolist(), 't': obj_pose_est[cam_id].t().tolist()}
 
     with open(os.path.join(DATASET_PATH, config['object_calib']), 'w') as f:
-
         json.dump(json_data,f,indent=4)
 
 if __name__ == "__main__":
